@@ -4,6 +4,7 @@ const deployer = require('./deployer/deployer');
 const history = require('./history/history');
 const compiler = require('./compiler/compiler');
 const test = require('./etherlime-test/test');
+const shape = require('./shape/shape');
 const logger = require('./../logger-service/logger-service').logger;
 const eventTracker = require('./event-tracker');
 const recordEvent = eventTracker.recordEvent
@@ -258,6 +259,12 @@ const commands = [
 				describe: 'The port that the etherlime ganache is running in order to instantiate the test accounts',
 				type: 'number',
 				default: 8545
+			});
+
+			yargs.positional('timeout', {
+				describe: 'Set test timeout in milliseconds',
+				type: 'number',
+				default: 10000
 			})
 		},
 		commandProcessor: async (argv) => {
@@ -267,7 +274,7 @@ const commands = [
 			logger.storeOutputParameter(argv.output);
 
 			try {
-				await test.run(argv.path, argv.skipCompilation, argv.solcVersion, argv.port);
+				await test.run(argv.path, argv.timeout, argv.skipCompilation, argv.solcVersion, argv.port);
 			} catch (err) {
 				console.error(err);
 			} finally {
@@ -300,6 +307,31 @@ const commands = [
 				argv
 			});
 			await test.runWithCoverage(argv.path, argv.port, argv.runs);
+		}
+	},
+	{
+		command: 'shape [name]',
+		description: 'Shapes ready to use dApp containing all files and settings.',
+		argumentsProcessor: (yargs) => {
+			yargs.positional('name', {
+				describe: 'Specifies the name of the framework or library that the project will be build up.',
+				type: 'string'
+			})
+		},
+		commandProcessor: (argv) => {
+			recordEvent('etherlime shape', {
+				argv
+			});
+
+			logger.storeOutputParameter(argv.output);
+
+			try {
+				shape.run(argv.name);
+			} catch (err) {
+				console.error(err);
+			} finally {
+				logger.removeOutputStorage();
+			}
 		}
 	}
 ]
